@@ -1,6 +1,6 @@
 # Hot Takes Exchange
 
-A real-time multiplayer team-lunch game. Players invest fictional credits in a prediction about which side will win a room vote. It uses Node.js, Express and Socket.IO.
+HR said we need team bonding. Hot Takes Exchange is a real-time multiplayer team-lunch game where players predict which side will win a room vote using fictional credits. It uses Node.js, Express and Socket.IO.
 
 ## Requirements
 - Node.js 18+ (20+ recommended)
@@ -11,8 +11,10 @@ A real-time multiplayer team-lunch game. Players invest fictional credits in a p
 npm install
 npm start
 ```
-On the host laptop, open `http://localhost:3000/?host=1` and enter host PIN `2468`.
+On the host laptop, open `http://localhost:3000/?host=1` and enter host PIN `2004`.
 For players on the same Wi-Fi, the host opens the app's join QR; phones scan it and open the LAN URL. If the generated URL doesn't work on the network, find the laptop's local IPv4 address and open `http://LAPTOP-IP:3000` from phones.
+
+To enable the host-only chili bot, set `OPENAI_API_KEY` in the server environment. The assistant uses the Responses API and defaults to `gpt-5-mini`; set `OPENAI_MODEL` to use another supported model. The API key stays on the server.
 
 To change the host PIN:
 - macOS/Linux: `HOST_PIN=your-pin npm start`
@@ -23,11 +25,11 @@ For internet play, deploy the app to a Node.js host and set `PUBLIC_URL` to the 
 ## How to play
 1. Players join with a nickname and optionally upload a face photo. The image is resized in the browser before upload and appears on the leaderboard and champion reveal.
 2. Host opens `/?host=1`, unlocks controls, and starts a round.
-3. Market is open for 30 seconds by default. Each player privately invests 100–500 credits in AGREE or DISAGREE. The public sees only pooled amounts and calculated odds, never individual picks or stakes.
-4. Host closes the market and facilitates the debate.
-5. Host opens final voting; players privately vote on the take itself.
-6. Voting closes automatically after 20 seconds. Results and balances are revealed.
-7. Between rounds, players can spend 150 fictional credits to submit an anonymous hot take. The host sees the text but not the submitter's identity, and can approve or reject it. Approved takes enter the queue and will be used when the host starts a round with the prompt box blank.
+3. The market runs for 2 minutes (or until the host closes it). Each player privately invests 100 to 500 credits in AGREE or DISAGREE. The public sees only pooled amounts and calculated odds, never individual picks or stakes.
+4. Debate runs for 3 minutes. Players can send a reaction every 2 seconds and optionally vote once for which side argued better.
+5. Final voting runs for 1 minute; players privately vote on the take. Each phase advances automatically when its timer ends, or the host can advance early.
+6. Final voting closes automatically after 60 seconds. Results and balances are revealed.
+7. Between rounds, players can spend 150 fictional credits to submit an anonymous hot take. The host sees the text but not the submitter's identity, and can approve or reject it. Approved takes can be edited, reordered, skipped, and queued from the host dashboard.
 8. At the end, the host clicks **Crown the market champion** to display a full-screen winner reveal with the winner's uploaded photo, crown and trophy graphics.
 
 ## Scoring and odds
@@ -40,8 +42,8 @@ For internet play, deploy the app to a Node.js host and set `PUBLIC_URL` to the 
 
 ## Notes / limitations
 - This is an MVP, not production-hardened. It stores game state in memory, so restarting the server resets the game.
-- There is one room per server process; this is intended for one team-lunch session.
-- The app currently has no persistent player accounts or reconnect recovery. Players should keep their browser tab open during the game.
+- There is one in-memory room per server process; keep the Render service at one instance so all players and the host share the same room. Restarting or redeploying resets the room.
+- Player sessions can reconnect to the same running server from the same browser. A server restart still clears the room and active sessions.
 - A debate-vote feature records which side made the better argument, but that vote does not currently affect balances.
 - Uploaded profile images are kept in the server's in-memory game state and shared with participants in the room. Use a photo players are comfortable displaying to the group.
 - For a public deployment, configure a unique host PIN, use HTTPS, and consider stronger host authentication and persistent storage.

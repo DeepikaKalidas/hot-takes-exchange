@@ -10,13 +10,25 @@ const server = http.createServer(app);
 const io = new Server(server, { maxHttpBufferSize: 2e6 });
 const PORT = process.env.PORT || 3000;
 app.use(express.static('public'));
-app.get('/api/join-info', async (_req, res) => {
-  const base = process.env.PUBLIC_URL || `http://${getLanAddress()}:${PORT}`;
-  const url = new URL(base);
+app.get('/api/join-info', async (req, res) => {
+  const forwardedHost = req.get('x-forwarded-host');
+  const requestHost = (forwardedHost || req.get('host') || '').split(',')[0].trim();
+  const isLocalHost = /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(requestHost);
+  const forwardedProtocol = req.get('x-forwarded-proto')?.split(',')[0].trim();
+  let base = process.env.PUBLIC_URL;
+  if (!base) {
+    if (isLocalHost) base = `http://${getLanAddress()}:${PORT}`;
+    else {
+      const protocol = forwardedProtocol || (/\.onrender\.com(?::\d+)?$/i.test(requestHost) ? 'https' : req.protocol);
+      base = `${protocol}://${requestHost}`;
+    }
+  }
+  const url = new URL(/^[a-z][a-z\d+.-]*:\/\//i.test(base) ? base : `https://${base}`);
   url.searchParams.delete('host');
   url.searchParams.set('room', room.code);
-  const host = url.toString();
-  res.json({ url: host, qr: await QRCode.toDataURL(host) });
+  const joinUrl = url.toString();
+  res.set('Cache-Control', 'no-store');
+  res.json({ url: joinUrl, qr: await QRCode.toDataURL(joinUrl, { errorCorrectionLevel: 'H', margin: 2, width: 320 }) });
 });
 function getLanAddress() {
   const nets = os.networkInterfaces();

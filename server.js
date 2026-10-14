@@ -159,7 +159,7 @@ io.on('connection', socket => {
     if (!p || room.phase !== 'market') return fail(socket, 'The market is not open.');
     if (room.investments.has(p.id)) return fail(socket, 'Your investment is already locked for this round.');
     amount = Number(amount);
-    if (!['agree', 'disagree'].includes(side) || !Number.isInteger(amount) || amount < 100 || amount > 500 || amount > p.credits) return fail(socket, 'Choose a side and invest 100 to 500 credits.');
+    if (!['agree', 'disagree'].includes(side) || !Number.isInteger(amount) || amount < 100 || amount > 500 || amount > p.credits) return fail(socket, 'Choose a side and invest 100 to 500 CP.');
     p.credits -= amount;
     room.investments.set(p.id, { side, amount });
     privateState(socket); emitState();
@@ -194,11 +194,11 @@ io.on('connection', socket => {
     if (room.phase !== 'lobby' && room.phase !== 'results') return fail(socket, 'Submit a hot take between rounds.');
     text = cleanTake(text);
     if (text.length < 12) return fail(socket, 'Your hot take needs at least 12 characters.');
-    if (p.credits < SUBMISSION_COST) return fail(socket, `You need ${SUBMISSION_COST} credits to submit a hot take.`);
+    if (p.credits < SUBMISSION_COST) return fail(socket, `You need ${SUBMISSION_COST} CP to submit a hot take.`);
     if (room.submissions.some(s => s.text.toLowerCase() === text.toLowerCase() && s.status !== 'rejected')) return fail(socket, 'That hot take has already been submitted.');
     p.credits -= SUBMISSION_COST;
     room.submissions.push({ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text, status: 'pending', submittedBy: p.id });
-    socket.emit('notice', { message: `Hot take submitted anonymously. ${SUBMISSION_COST} credits spent.` });
+    socket.emit('notice', { message: `Hot take submitted anonymously. ${SUBMISSION_COST} CP spent.` });
     socket.emit('take-submitted'); privateState(socket); emitState();
   });
   socket.on('host-action', async ({ action, prompt }) => {
